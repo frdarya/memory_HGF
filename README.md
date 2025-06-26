@@ -25,7 +25,7 @@ This repository contains custom TAPAS observation models designed to explain cro
 ```
 Input (u) → [HGF Binary] → Beliefs (mu) → [Observation Model] → Response (y)
               ↑                              ↑
-     tapas_hgf_binary_config        Your custom observation models
+     tapas_hgf_binary_config           Custom observation models
 ```
 
 ### Core Innovation: Similarity-Based Evidence Scaling
