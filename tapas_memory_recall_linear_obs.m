@@ -206,10 +206,11 @@ y = r.y(:,1);
 y(r.irr) = [];
 similarity(r.irr) = [];
 item_id(r.irr) = [];
-
+old_new_status = r.u(:,1);  % 1=Target (old), 0=Foil (new)
+old_new_status(r.irr) = [];
 % Initialise container
 item_history = containers.Map('KeyType', 'double', 'ValueType', 'any');
-% Stores: [previous_response, previous_similarity, correction_bias, presentation_count]
+% Stores: [previous_response, previous_similarity, correction_bias, presentation_count, old_new_status]
 
 x = zeros(size(mu1hat));
 
@@ -218,14 +219,12 @@ for t = 1:length(mu1hat)
     current_item = item_id(t);
     current_similarity = similarity(t);
     current_mu1hat = mu1hat(t);
+    curret_old_new = old_new_status(t);
 
     if isKey(item_history, current_item)
         d = item_history(current_item);
-        prev_response=d(1); prev_similarity=d(2); correction_bias=d(3); presentation_count=d(4);
-
-        old_new_status = r.u(:,1);  % 1=Target (old), 0=Foil (new)
-        old_new_status(r.irr) = [];
-%         [prev_response, prev_similarity, correction_bias, presentation_count, prev_old_new] = item_history(current_item);
+        prev_response=d(1); prev_similarity=d(2); correction_bias=d(3); presentation_count=d(4); prev_old_new=d(5);
+        %[prev_response, prev_similarity, correction_bias, presentation_count, prev_old_new] = item_history(current_item);
 
         %Determine if previous response was ERROR
         was_error = (prev_old_new == 1 && prev_response == 0) || ...  % Miss
@@ -268,13 +267,11 @@ for t = 1:length(mu1hat)
         new_correction_bias = max(0.01, min(0.99, new_correction_bias));
 
         %%%%% CHECK WITH NELSON %%%%%%
-        % In this loop we just keep track of the last item seen within the set?
-        % (overwrites earlier items), so if presentation order is
-        % Target, F3, F1, F2 - we'd actually lost the target-F1 dependency?
-        % Target, F3, F2, F1
-        % (because for F1 we'd get the error-correction of F3)
+        % we update the correct bias everytime we encounter an item from
+        % the same set, and the bias is adjusted based on the similarity
+        % level (error confidence)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        item_history(current_item) = [y(t), current_similarity, new_correction_bias, presentation_count + 1];
+        item_history(current_item) = [y(t), current_similarity, new_correction_bias, presentation_count + 1, curret_old_new];
 
     else
 
@@ -282,7 +279,7 @@ for t = 1:length(mu1hat)
         x(t) = current_mu1hat + 1/(1 + nu) * (current_similarity - current_mu1hat);
 
         % Initialize with current response and medium correction bias
-        item_history(current_item) = [y(t), current_similarity, 0.3, 1];
+        item_history(current_item) = [y(t), current_similarity, 0.3, 1, curret_old_new];
 
         %% extract bias to compare sets with Target - F3- F2- F1 vs Target - F1 - F3 -F2
 

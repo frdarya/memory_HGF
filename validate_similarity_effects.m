@@ -93,10 +93,6 @@ actual_gradient_group = nanmean(actual_p_old, 1);
 model_monotonic = all(diff(model_gradient_group) < 0);
 actual_monotonic = all(diff(actual_gradient_group) < 0);
 
-% Statistical test of gradient
-[~, p_gradient] = ttest(model_gradients(valid_gradients));
-fprintf('Model gradient significance: p = %.4f\n', p_gradient);
-
 % Save plot
 % saveas(gcf, sprintf('%s_similarity_validation.png', model_name));
 % fprintf('Plot saved as: %s_similarity_validation.png\n', model_name);
@@ -105,7 +101,5 @@ fprintf('Model gradient significance: p = %.4f\n', p_gradient);
 validation.model_p_old = model_p_old;
 validation.actual_p_old = actual_p_old;
 validation.level_correlations = level_correlations;
-validation.model_gradients = model_gradients;
-validation.actual_gradients = actual_gradients;
 
 end
