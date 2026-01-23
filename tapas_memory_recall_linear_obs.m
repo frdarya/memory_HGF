@@ -223,25 +223,16 @@ for t = 1:length(mu1hat)
         d = item_history(current_item);
         prev_response=d(1); prev_similarity=d(2); correction_bias=d(3); presentation_count=d(4);
 
-        %%%%% CHECK WITH NELSON %%%%%%
-        % Prev response is old/new, not correct/incorrect - I think lines
-        % below assume prev_response==0 means incorrect?? (i.e. currently
-        % this only works for targets, where 0 == missed; for foils
-        % response 0 is actually a correct rejection)
-        %
-        % Might need something like this:
-        % old_new_status = r.u(:,1);  % 1=Target (old), 0=Foil (new)
-        % old_new_status(r.irr) = [];
-        % [prev_response, prev_similarity, correction_bias, presentation_count, prev_old_new] = item_history(current_item);
-        %
-        % %Determine if previous response was ERROR
-        %  was_error = (prev_old_new == 1 && prev_response == 0) || ...  % Miss
-        %              (prev_old_new == 0 && prev_response == 1);         % FA
-        %
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        old_new_status = r.u(:,1);  % 1=Target (old), 0=Foil (new)
+        old_new_status(r.irr) = [];
+%         [prev_response, prev_similarity, correction_bias, presentation_count, prev_old_new] = item_history(current_item);
+
+        %Determine if previous response was ERROR
+        was_error = (prev_old_new == 1 && prev_response == 0) || ...  % Miss
+            (prev_old_new == 0 && prev_response == 1);         % FA
 
         % Calculate error confidence (simplified linear version)
-        if prev_response == 0
+        if was_error == 0
             error_confidence = prev_similarity;
         else
             error_confidence = 1 - prev_similarity;
@@ -275,10 +266,10 @@ for t = 1:length(mu1hat)
         % UPDATE BIAS using proper learning rate
         new_correction_bias = (1-alpha) * correction_bias + alpha * error_confidence;
         new_correction_bias = max(0.01, min(0.99, new_correction_bias));
-        
+
         %%%%% CHECK WITH NELSON %%%%%%
         % In this loop we just keep track of the last item seen within the set?
-        % (overwrites earlier items), so if presentation order is  
+        % (overwrites earlier items), so if presentation order is
         % Target, F3, F1, F2 - we'd actually lost the target-F1 dependency?
         % Target, F3, F2, F1
         % (because for F1 we'd get the error-correction of F3)
