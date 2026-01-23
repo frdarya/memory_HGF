@@ -213,6 +213,7 @@ item_history = containers.Map('KeyType', 'double', 'ValueType', 'any');
 % Stores: [previous_response, previous_similarity, correction_bias, presentation_count, old_new_status]
 
 x = zeros(size(mu1hat));
+bias = NaN(1,7);
 
 for t = 1:length(mu1hat)
 
@@ -231,7 +232,7 @@ for t = 1:length(mu1hat)
             (prev_old_new == 0 && prev_response == 1);         % FA
 
         % Calculate error confidence (simplified linear version)
-        if was_error == 0
+        if was_error == 0 %prev_response
             error_confidence = prev_similarity;
         else
             error_confidence = 1 - prev_similarity;
@@ -249,7 +250,7 @@ for t = 1:length(mu1hat)
         log_odds_correction = log(correction_strength / (1 - correction_strength));
 
         % Apply correction with learning rate gamma
-        if prev_response == 0
+        if was_error == 0 %prev_response
             log_odds_adjusted = log_odds_prior + gamma * log_odds_correction;
         else
             log_odds_adjusted = log_odds_prior - gamma * log_odds_correction;
@@ -272,21 +273,23 @@ for t = 1:length(mu1hat)
         % level (error confidence)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         item_history(current_item) = [y(t), current_similarity, new_correction_bias, presentation_count + 1, curret_old_new];
+        
+        %% extract bias to compare sets with Target - F3- F2- F1 vs Target - F1 - F3 -F2
+        bias(t,:) = [r.u(t,3),presentation_count, y(r.u(t,3)),r.u(t,2), new_correction_bias,was_error,prev_similarity];
 
     else
 
         % FIRST PRESENTATION - no correction yet
         x(t) = current_mu1hat + 1/(1 + nu) * (current_similarity - current_mu1hat);
-
+        bias(t,:) = NaN(1,7);
         % Initialize with current response and medium correction bias
         item_history(current_item) = [y(t), current_similarity, 0.3, 1, curret_old_new];
 
-        %% extract bias to compare sets with Target - F3- F2- F1 vs Target - F1 - F3 -F2
-
+        
     end
 
 end
-
+bias_clean = bias(~isnan(bias(:,1)),:);
 % Calculate log-probabilities
 reg = ~ismember(1:n, r.irr);
 logp(reg) = -log(1 + exp(-be .* (2.*x - 1) .* (2.*y - 1)));
