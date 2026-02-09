@@ -86,8 +86,8 @@ function [logp, yhat, res] = tapas_memory_recall_linear_obs(r, infStates, ptrans
 %   r.u = [
 %      1, 0.75, 101;  % Trial 1: Condition 1, similarity 75%, Item 101
 %      1, 0.25, 102;  % Trial 2: Condition 1, similarity 25%, Item 102
-%      2, 1.00, 101;  % Trial 3: Condition 2, similarity 100%, Item 101 (repetition!)
-%      2, 0.50, 103;  % Trial 4: Condition 2, similarity 50%, Item 103
+%      0, 1.00, 101;  % Trial 3: Condition 2, similarity 100%, Item 101 (repetition!)
+%      1, 0.50, 103;  % Trial 4: Condition 2, similarity 50%, Item 103
 %      % ... etc.
 %   ];
 %
@@ -227,15 +227,14 @@ for t = 1:length(mu1hat)
         prev_response=d(1); prev_similarity=d(2); correction_bias=d(3); presentation_count=d(4); prev_old_new=d(5);
         %[prev_response, prev_similarity, correction_bias, presentation_count, prev_old_new] = item_history(current_item);
 
-        %Determine if previous response was ERROR
-        was_error = (prev_old_new == 1 && prev_response == 0) || ...  % Miss
-            (prev_old_new == 0 && prev_response == 1);         % FA
-
-        % Calculate error confidence (simplified linear version)
-        if was_error == 0 %prev_response
-            error_confidence = prev_similarity;
+        % Calculate error confidence (simplified linear version) 
+        if prev_response == 0 % new
+            error_confidence = prev_similarity; % prev_similarity * 0.8 
+            % target = 1; high_foil = 0.75; mid_foil = 0.5; low_foil = 0.25
+            % target = 0.8; high_foil = 0.5; mid_foil = 0.3; low_foil = 0.1
         else
             error_confidence = 1 - prev_similarity;
+            
         end
         error_confidence = max(0.05, min(0.95, error_confidence));
 
@@ -250,11 +249,14 @@ for t = 1:length(mu1hat)
         log_odds_correction = log(correction_strength / (1 - correction_strength));
 
         % Apply correction with learning rate gamma
-        if was_error == 0 %prev_response
+        if prev_response == 0 % new
             log_odds_adjusted = log_odds_prior + gamma * log_odds_correction;
         else
             log_odds_adjusted = log_odds_prior - gamma * log_odds_correction;
         end
+
+        % Remove gamma from correction update
+        % log_odds_adjusted = log_odds_prior * log_odds_correction;
 
         % Convert back to probability
         adjusted_prior = exp(log_odds_adjusted) / (1 + exp(log_odds_adjusted));
@@ -272,10 +274,11 @@ for t = 1:length(mu1hat)
         % the same set, and the bias is adjusted based on the similarity
         % level (error confidence)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        item_history(current_item) = [y(t), current_similarity, new_correction_bias, presentation_count + 1, curret_old_new];
+        item_history(current_item) = [y(t), current_similarity,...
+            new_correction_bias, presentation_count + 1, curret_old_new];
         
         %% extract bias to compare sets with Target - F3- F2- F1 vs Target - F1 - F3 -F2
-        bias(t,:) = [r.u(t,3),presentation_count, y(r.u(t,3)),r.u(t,2), new_correction_bias,was_error,prev_similarity];
+        bias(t,:) = [r.u(t,3),presentation_count, y(r.u(t,3)),r.u(t,2), new_correction_bias,prev_response,prev_similarity];
 
     else
 
