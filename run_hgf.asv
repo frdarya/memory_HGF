@@ -73,7 +73,12 @@ for i = 1:numel(uniqueSubs)
     overall_acc(i) = mean(subRaw.Correctness);
     targs = subRaw(subRaw.Similarity ==1,:);
     foils = subRaw(subRaw.Similarity ~=1,:);
+    f1 = subRaw(subRaw.Similarity ==0.75,:);
+    f2 = subRaw(subRaw.Similarity ==0.5,:);
+    f1s(i) = mean(f1.Correctness);
+    f2s(i) = mean(f2.Correctiness)
     crs(i) = mean(foils.Correctness);
+
     hit(i) = mean(targs.Correctness);
     clear subRaw targs
 end
@@ -81,6 +86,8 @@ end
 [r_gh,p_gh] = corrcoef(hit, gamma)
 [r_gcr,p_gcr] = corrcoef(crs, gamma)
 [r_a,p_a] = corrcoef(overall_acc, alpha);
+[r_f1,p_f1] = corrcoef(f1s, gamma)
+[r_f2,p_f2] = corrcoef(f2s, gamma);
 
 figure(); subplot(221); scatter(overall_acc, gamma); 
 title('Correlation gamma - overall accuracy'); xlabel('overall accuracy'); ylabel('gamma')

@@ -73,7 +73,15 @@ for i = 1:numel(uniqueSubs)
     overall_acc(i) = mean(subRaw.Correctness);
     targs = subRaw(subRaw.Similarity ==1,:);
     foils = subRaw(subRaw.Similarity ~=1,:);
+    f1 = subRaw(subRaw.Similarity ==0.75,:);
+    f2 = subRaw(subRaw.Similarity ==0.5,:);
+        f3 = subRaw(subRaw.Similarity ==0.25,:);
+
+    f1s(i) = mean(f1.Correctness);
+    f2s(i) = mean(f2.Correctness)
+    f3s(i) = mean(f3.Correctness)
     crs(i) = mean(foils.Correctness);
+
     hit(i) = mean(targs.Correctness);
     clear subRaw targs
 end
@@ -81,20 +89,23 @@ end
 [r_gh,p_gh] = corrcoef(hit, gamma)
 [r_gcr,p_gcr] = corrcoef(crs, gamma)
 [r_a,p_a] = corrcoef(overall_acc, alpha);
+[r_f1,p_f1] = corrcoef(f1s, gamma)
+[r_f2,p_f2] = corrcoef(f2s, gamma)
 
-figure(); subplot(221); scatter(overall_acc, gamma); 
-title('Correlation gamma - overall accuracy'); xlabel('overall accuracy'); ylabel('gamma')
-set(gca, 'FontSize', 14)
-subplot(222); scatter(hit, gamma); title('Correlation gamma - hit rate');
+
+figure(); 
+subplot(221); scatter(hit, gamma); title('Correlation gamma - hit rate');
 xlabel('hit rate'); ylabel('gamma');set(gca, 'FontSize', 14)
+subplot(222); scatter(f1s, gamma);
+title('Correlation gamma - F1 correct rejection');xlabel('correct rejection'); ylabel('gamma')
+set(gca, 'FontSize', 14)
+subplot(223); scatter(f2s, gamma);
+title('Correlation gamma - F2 correct rejection');xlabel('correct rejection'); ylabel('gamma')
+set(gca, 'FontSize', 14)
+subplot(224); scatter(f3s, gamma);
+title('Correlation gamma - F3 correct rejection');xlabel('correct rejection'); ylabel('gamma')
+set(gca, 'FontSize', 14)
 
-subplot(223); scatter(crs, gamma);
-title('Correlation gamma - correct rejection');xlabel('correct rejection'); ylabel('gamma')
-set(gca, 'FontSize', 14)
-subplot(224); scatter(overall_acc, alpha);title('Correlation alpha - overall accuracy')
-xlabel('overall accuracy'); ylabel('alpha');
-sgtitle('Simluated Data - all correct')
-set(gca, 'FontSize', 14)
 
 validation = validate_similarity_effects(output_memory_hgf, longT, 'output_memory_hgf');
 
